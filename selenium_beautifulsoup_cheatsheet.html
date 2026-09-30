@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Selenium + BeautifulSoup Cheat Sheet</title>
+<style>
+:root{
+  --bg:#0b1020; --panel:#121a2d; --panel2:#18233b; --text:#eef4ff; --muted:#a8b5cc;
+  --blue:#59a8ff; --cyan:#61e2ff; --green:#76e6a7; --yellow:#ffd66b; --pink:#ff8bc5;
+  --line:#283653; --code:#09101d; --shadow:0 14px 40px rgba(0,0,0,.26);
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top right,#152449 0,#0b1020 45%,#070b14 100%);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;line-height:1.42}
+.wrap{max-width:1240px;margin:auto;padding:30px 24px 56px}
+.hero{display:flex;gap:20px;justify-content:space-between;align-items:end;border:1px solid var(--line);border-radius:24px;padding:28px;background:linear-gradient(135deg,rgba(89,168,255,.13),rgba(97,226,255,.05));box-shadow:var(--shadow)}
+.hero h1{margin:0;font-size:clamp(30px,5vw,56px);letter-spacing:-1.5px}.hero p{margin:8px 0 0;color:var(--muted);max-width:730px}.badge{padding:9px 13px;border:1px solid #365985;border-radius:999px;color:var(--cyan);white-space:nowrap;background:#0d1730}
+nav{position:sticky;top:0;z-index:4;margin:18px 0;padding:10px;background:rgba(7,11,20,.86);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:16px;display:flex;gap:8px;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;padding:7px 11px;border-radius:10px}nav a:hover{background:#18233b;color:white}
+.section{margin-top:32px}.section h2{font-size:26px;margin:0 0 14px}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.card{grid-column:span 4;background:linear-gradient(180deg,var(--panel),#0f1729);border:1px solid var(--line);border-radius:18px;padding:17px;box-shadow:0 8px 22px rgba(0,0,0,.16)}.wide{grid-column:span 6}.full{grid-column:1/-1}.card h3{margin:0 0 10px;font-size:17px}.card p{color:var(--muted);margin:7px 0}.k{font-size:11px;text-transform:uppercase;letter-spacing:.11em;font-weight:700;color:var(--cyan)}
+code,pre{font-family:"Cascadia Code",Consolas,monospace}pre{white-space:pre-wrap;margin:9px 0 0;padding:12px;border-radius:12px;background:var(--code);border:1px solid #22314c;color:#e6f0ff;overflow:auto;font-size:13px}.blue{border-top:3px solid var(--blue)}.green{border-top:3px solid var(--green)}.yellow{border-top:3px solid var(--yellow)}.pink{border-top:3px solid var(--pink)}.cyan{border-top:3px solid var(--cyan)}
+.table{width:100%;border-collapse:collapse;font-size:14px}.table th,.table td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.table th{color:var(--cyan)}.muted{color:var(--muted)}.pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#162744;border:1px solid #274369;color:#b9dcff;font-size:12px;margin:2px}
+.note{border-left:4px solid var(--yellow);padding:10px 14px;background:#1b1a13;border-radius:10px;color:#ffe9a7}.footer{margin-top:28px;color:#8190aa;font-size:13px;text-align:center}
+@media(max-width:900px){.card,.wide{grid-column:1/-1}.hero{align-items:flex-start;flex-direction:column}}
+@media print{body{background:white;color:#111}.wrap{max-width:none;padding:10mm}.hero,.card,nav{box-shadow:none}.hero,.card{background:white;color:#111;border-color:#bbb}nav{display:none}pre{background:#f5f5f5;color:#111}.muted,.card p{color:#444}.section{break-inside:avoid}}
+</style>
+</head>
+<body><div class="wrap">
+<div class="hero"><div><div class="k">Python web scraping quick reference</div><h1>Selenium + BeautifulSoup</h1><p>A practical cheat sheet for the commands you reach for most: browser automation, locators, text and attributes, waiting, parsing, CSS selectors, and the key differences between Selenium and BeautifulSoup.</p></div><div class="badge">Modern Selenium 4 style</div></div>
+<nav><a href="#selenium">Selenium</a><a href="#locators">Locators</a><a href="#waits">Waits</a><a href="#bs4">BeautifulSoup</a><a href="#compare">Compare</a><a href="#patterns">Patterns</a></nav>
+
+<section class="section" id="selenium"><h2>Selenium essentials</h2><div class="grid">
+<div class="card blue"><div class="k">Start</div><h3>Browser lifecycle</h3><pre>from selenium import webdriver
+
+driver = webdriver.Chrome()
+driver.get("https://example.com")
+
+print(driver.title)
+print(driver.current_url)
+
+driver.quit()</pre></div>
+<div class="card cyan"><div class="k">Source</div><h3>Read the loaded page</h3><pre>html = driver.page_source
+body = driver.find_element(By.TAG_NAME, "body")
+print(body.text)</pre><p><code>page_source</code> gives HTML. <code>element.text</code> gives visible text.</p></div>
+<div class="card green"><div class="k">Find</div><h3>One vs many</h3><pre>element = driver.find_element(
+    By.ID, "login"
+)
+
+elements = driver.find_elements(
+    By.CSS_SELECTOR, ".card"
+)</pre><p><code>find_element</code> returns one WebElement; <code>find_elements</code> returns a list.</p></div>
+<div class="card yellow"><div class="k">Inspect</div><h3>Text, tag, attributes</h3><pre>element.text
+element.tag_name
+
+element.get_attribute("href")
+element.get_attribute("class")
+element.get_attribute("outerHTML")</pre></div>
+<div class="card pink"><div class="k">Act</div><h3>Interact</h3><pre>element.click()
+element.clear()
+element.send_keys("UAV landing")</pre><p>Typical for search boxes, forms, buttons, filters, and dynamic pages.</p></div>
+<div class="card blue"><div class="k">Import</div><h3>By locator API</h3><pre>from selenium.webdriver.common.by import By</pre><p>Prefer Selenium 4 style:</p><pre>driver.find_element(By.XPATH, "...")</pre><p>Not the old <code>find_element_by_xpath()</code> style.</p></div>
+</div></section>
+
+<section class="section" id="locators"><h2>Locator quick reference</h2><div class="grid">
+<div class="card wide cyan"><h3>Common locator strategies</h3><table class="table"><tr><th>Strategy</th><th>Example</th></tr><tr><td>By.ID</td><td><code>driver.find_element(By.ID, "login")</code></td></tr><tr><td>By.NAME</td><td><code>driver.find_element(By.NAME, "query")</code></td></tr><tr><td>By.CLASS_NAME</td><td><code>driver.find_elements(By.CLASS_NAME, "card")</code></td></tr><tr><td>By.TAG_NAME</td><td><code>driver.find_element(By.TAG_NAME, "body")</code></td></tr><tr><td>By.CSS_SELECTOR</td><td><code>driver.find_elements(By.CSS_SELECTOR, ".card a")</code></td></tr><tr><td>By.XPATH</td><td><code>driver.find_element(By.XPATH, "//a")</code></td></tr></table></div>
+<div class="card wide blue"><h3>CSS selector mini-sheet</h3><pre>#login                 /* id */
+.card                  /* class */
+a                      /* tag */
+a.document-link        /* tag + class */
+.card a                /* descendant */
+a[href]                /* has attribute */
+a[href*="/document/"]  /* attribute contains */</pre></div>
+<div class="card full green"><h3>XPath mini-sheet</h3><pre>//h2[text()='Hello']
+//*[contains(text(), 'UAV')]
+//a[@href='/document/123']
+//a[contains(@href, '/document/')]
+//a[contains(text(), 'UAV')]</pre></div>
+</div></section>
+
+<section class="section" id="waits"><h2>Waiting for dynamic content</h2><div class="grid">
+<div class="card wide yellow"><h3>Quick but crude</h3><pre>import time
+time.sleep(5)</pre><p>Useful while debugging, but fixed sleeps are slower and less reliable.</p></div>
+<div class="card wide green"><h3>Preferred: explicit wait</h3><pre>from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+wait = WebDriverWait(driver, 10)
+
+element = wait.until(
+    EC.presence_of_element_located((By.ID, "result"))
+)</pre></div>
+<div class="card full cyan"><h3>Useful expected conditions</h3><span class="pill">presence_of_element_located</span><span class="pill">visibility_of_element_located</span><span class="pill">element_to_be_clickable</span><p>Use explicit waits when JavaScript loads results after the initial page response.</p></div>
+</div></section>
+
+<section class="section" id="bs4"><h2>BeautifulSoup essentials</h2><div class="grid">
+<div class="card blue"><div class="k">Parse</div><h3>Create the soup</h3><pre>from bs4 import BeautifulSoup
+
+soup = BeautifulSoup(
+    html,
+    "html.parser"
+)</pre></div>
+<div class="card green"><div class="k">Find</div><h3>Find tags</h3><pre>soup.find("a")
+soup.find_all("a")
+soup.find(id="main")
+soup.find("div", class_="card")</pre></div>
+<div class="card cyan"><div class="k">CSS</div><h3>CSS selectors</h3><pre>soup.select_one(".card")
+soup.select(".card a")
+soup.select('a[href*="/document/"]')</pre></div>
+<div class="card yellow"><div class="k">Text</div><h3>Get text</h3><pre>tag.text
+tag.get_text()
+tag.get_text(strip=True)</pre><p><code>strip=True</code> removes surrounding whitespace.</p></div>
+<div class="card pink"><div class="k">Attributes</div><h3>Safe attribute access</h3><pre>tag["href"]      # may raise
+
+tag.get("href")  # returns None if absent</pre></div>
+<div class="card blue"><div class="k">Navigate</div><h3>Nearby elements</h3><pre>tag.parent
+tag.children
+tag.next_sibling
+tag.previous_sibling</pre></div>
+</div></section>
+
+<section class="section" id="compare"><h2>Selenium vs BeautifulSoup</h2><div class="grid"><div class="card full"><table class="table"><tr><th>Task</th><th>Selenium</th><th>BeautifulSoup</th></tr><tr><td>Get visible text</td><td><code>element.text</code></td><td><code>tag.get_text(strip=True)</code></td></tr><tr><td>Get href</td><td><code>element.get_attribute("href")</code></td><td><code>tag.get("href")</code></td></tr><tr><td>Find all links</td><td><code>driver.find_elements(By.TAG_NAME, "a")</code></td><td><code>soup.find_all("a")</code></td></tr><tr><td>Need JavaScript</td><td>Yes - use Selenium</td><td>No - parses existing HTML only</td></tr><tr><td>Can click / type / scroll</td><td>Yes</td><td>No</td></tr></table></div></div></section>
+
+<section class="section" id="patterns"><h2>Practical patterns</h2><div class="grid">
+<div class="card wide green"><h3>Safe loop over links</h3><pre>for tag in soup.find_all("a"):
+    url = tag.get("href")
+    if url and "/document/" in url:
+        print(url)</pre></div>
+<div class="card wide blue"><h3>Inspect one Selenium result</h3><pre>element = driver.find_element(By.XPATH, "...")
+print(element.tag_name)
+print(element.text)
+print(element.get_attribute("outerHTML"))</pre></div>
+<div class="card full"><div class="note"><strong>Rule of thumb:</strong> use BeautifulSoup when the data is already in the HTML. Use Selenium when JavaScript loads the content or you need to interact with the page.</div></div>
+</div></section>
+<div class="footer">Selenium + BeautifulSoup cheat sheet - practical Python web scraping reference</div>
+</div></body></html>
